@@ -1,21 +1,21 @@
-# torch/torchvision/torchaudio are installed by setup.bat with the correct
-# CUDA index URL — do NOT add them here or pip will overwrite with a CPU build.
-bitsandbytes>=0.43.0
-safetensors
-accelerate
-transformers
-diffusers
-einops
-ftfy
-imageio
-imageio-ffmpeg
-pillow
-numpy
-tqdm
-easydict
-customtkinter
-fastapi>=0.100.0
-uvicorn[standard]
-huggingface_hub>=1.0.0
-psutil
-nvidia-ml-py>=12.0.0
+﻿# torch/torchvision/torchaudio are installed by setup.bat with the correct
+# CUDA index URL -- do NOT add them here or pip will overwrite with a CPU build.
+bitsandbytes>=0.49.0
+safetensors>=0.7.0
+accelerate>=1.13.0
+transformers>=4.51.0
+diffusers>=0.37.0
+einops>=0.8.0
+ftfy>=6.3.0
+imageio>=2.37.0
+imageio-ffmpeg>=0.6.0
+pillow>=12.0.0
+numpy>=2.0.0
+tqdm>=4.67.0
+easydict>=1.13
+customtkinter>=5.2.2
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+huggingface_hub>=1.5.0
+psutil>=7.0.0
+nvidia-ml-py>=13.0.0

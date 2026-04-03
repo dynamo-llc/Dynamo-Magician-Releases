@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 title DYNAMO MAGICIAN - First Time Setup
 color 0A
@@ -103,6 +103,9 @@ if exist ".venv\Scripts\activate.bat" (
 )
 
 call .venv\Scripts\activate.bat
+
+echo  Updating package installer...
+python -m pip install --upgrade pip -q --progress-bar off
 
 echo  Installing PyTorch (GPU support -- this is the big one)...
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128 -q --progress-bar off
