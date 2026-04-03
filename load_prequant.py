@@ -23,6 +23,26 @@ import torch.nn as nn
 import bitsandbytes as bnb
 from bitsandbytes.functional import QuantState
 
+# ── bitsandbytes version guard ────────────────────────────────────────────────
+# A very old or mismatched bitsandbytes can segfault (access violation) inside
+# Linear4bit.__init__ before Python gets a chance to handle any exception.
+# Fail loudly here so the error event reaches the UI instead of silently
+# killing the server process.
+def _require_bnb_version(min_tuple=(0, 45, 0)):
+    try:
+        parts = tuple(int(x) for x in bnb.__version__.split(".")[:3] if x.isdigit())
+        if parts < min_tuple:
+            raise RuntimeError(
+                f"bitsandbytes {bnb.__version__} is too old (need >={'.'.join(map(str, min_tuple))}).\n"
+                "Please run setup.bat to reinstall the correct environment."
+            )
+    except RuntimeError:
+        raise
+    except Exception:
+        pass  # Non-standard version string; allow through
+
+_require_bnb_version()
+
 # Add parent to path for wan imports
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
@@ -31,24 +51,18 @@ from wan.modules.model import WanModel
 from native_bnb import NativeLinear4bit
 
 def is_blackwell():
-    """Detect if the current GPU is Blackwell (CC 12.0+) AND PyTorch lacks native support.
-    
-    With PyTorch 2.7+ (cu128), sm_120 is natively supported, so the
-    NativeLinear4bit workaround is unnecessary.  Only return True when
-    the GPU is Blackwell but PyTorch was *not* compiled with sm_120 kernels.
+    """Detect if the current GPU is Blackwell (CC 12.0+).
+
+    Always returns True for sm_120+ regardless of PyTorch arch_list.
+    Blackwell GPUs always use the NativeLinear4bit path (pure-PyTorch
+    dequant + static FP16 migration), which avoids bitsandbytes CUDA
+    kernel incompatibilities on Blackwell regardless of bnb version.
     """
     if not torch.cuda.is_available():
         return False
     try:
         props = torch.cuda.get_device_properties(0)
-        if props.major < 12:
-            return False
-        # If PyTorch includes sm_120 in its arch list, bnb works natively
-        arch_list = torch.cuda.get_arch_list()
-        sm_tag = f"sm_{props.major}{props.minor}"
-        if sm_tag in arch_list:
-            return False
-        return True
+        return props.major >= 12
     except:
         return False
 
