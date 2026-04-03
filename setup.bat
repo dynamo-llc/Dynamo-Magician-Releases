@@ -159,17 +159,17 @@ if "%NEED_DL%"=="0" (
 echo  Downloading now. Go grab a coffee -- this takes a while!
 echo.
 
-python -m huggingface_hub download %HF_REPO% models_t5_umt5-xxl-enc-bf16.pth             --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% Wan2.1_VAE.pth                               --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% high_noise_model_bnb_nf4/model.safetensors   --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% high_noise_model_bnb_nf4/config.json         --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% high_noise_model_bnb_nf4/quantization_meta.json --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% low_noise_model_bnb_nf4/model.safetensors    --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% low_noise_model_bnb_nf4/config.json          --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% low_noise_model_bnb_nf4/quantization_meta.json  --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% tokenizer/tokenizer.json                     --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% tokenizer/tokenizer_config.json              --local-dir . --local-dir-use-symlinks False
-python -m huggingface_hub download %HF_REPO% tokenizer/special_tokens_map.json            --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% models_t5_umt5-xxl-enc-bf16.pth             --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% Wan2.1_VAE.pth                               --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% high_noise_model_bnb_nf4/model.safetensors   --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% high_noise_model_bnb_nf4/config.json         --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% high_noise_model_bnb_nf4/quantization_meta.json --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% low_noise_model_bnb_nf4/model.safetensors    --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% low_noise_model_bnb_nf4/config.json          --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% low_noise_model_bnb_nf4/quantization_meta.json  --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% tokenizer/tokenizer.json                     --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% tokenizer/tokenizer_config.json              --local-dir . --local-dir-use-symlinks False
+hf download %HF_REPO% tokenizer/special_tokens_map.json            --local-dir . --local-dir-use-symlinks False
 
 if errorlevel 1 (
     color 0C
