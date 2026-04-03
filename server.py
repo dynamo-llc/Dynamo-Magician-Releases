@@ -9,6 +9,7 @@ Wraps the WanI2V_PreQuant generation pipeline and exposes:
 
 import asyncio
 import base64
+import faulthandler
 import io
 import json
 import os
@@ -31,6 +32,11 @@ from generate_prequant import WanI2V_PreQuant, save_video
 
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Dynamo Magician API")
+
+# Enable faulthandler so C-level crashes (CUDA segfault, illegal instruction)
+# write a traceback to crash_fault.txt instead of dying silently.
+_fault_log = open(Path(__file__).parent / "crash_fault.txt", "w", buffering=1)
+faulthandler.enable(file=_fault_log)
 
 app.add_middleware(
     CORSMiddleware,
@@ -133,7 +139,9 @@ def _generation_thread(job_id: str, req: GenerateRequest) -> None:
             _pipeline = None
             torch.cuda.empty_cache()
 
-    except Exception as exc:
+    except BaseException as exc:
+        # Catches Exception subclasses (RuntimeError, etc.) AND  SystemExit /
+        # KeyboardInterrupt so that every failure writes crash_log.txt.
         import traceback
         tb = traceback.format_exc()
         msg = str(exc) or type(exc).__name__
@@ -145,6 +153,14 @@ def _generation_thread(job_id: str, req: GenerateRequest) -> None:
                 fh.write(tb)
         except Exception:
             pass
+        # Reset the pipeline so the next request rebuilds it cleanly
+        with _pipeline_lock:
+            _pipeline = None
+            torch.cuda.empty_cache()
+        # Re-raise process-control exceptions (Ctrl-C, sys.exit) so the
+        # server shuts down normally.
+        if not isinstance(exc, Exception):
+            raise
 
     finally:
         with _jobs_lock:
@@ -182,6 +198,7 @@ async def stream_events(job_id: str):
 
     async def event_generator():
         sent = 0
+        last_ping = time.monotonic()
         while True:
             with _jobs_lock:
                 job = _jobs.get(job_id)
@@ -192,9 +209,18 @@ async def stream_events(job_id: str):
             while sent < len(events):
                 yield f"data: {events[sent]}\n\n"
                 sent += 1
+                last_ping = time.monotonic()
 
             if job["done"] and sent >= len(events):
                 break
+
+            # Send a keepalive SSE comment every 15 s so the browser/proxy
+            # does not time out the idle chunked-transfer connection during
+            # long model-loading phases (T5 + NF4 can take 5+ minutes).
+            now = time.monotonic()
+            if now - last_ping >= 15:
+                yield ": ping\n\n"
+                last_ping = now
 
             await asyncio.sleep(0.1)
 
