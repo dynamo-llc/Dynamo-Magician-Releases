@@ -94,7 +94,7 @@ Camera pose directory should contain:
 
 - Python 3.10+
 - CUDA 11.8+ (tested with CUDA 12.x)
-- ~32GB VRAM (RTX 4090, RTX 5090, A100, etc.)
+- ~32GB VRAM (RTX 5090, A100, RTX 6000, etc.)
 
 ## Quantization Details
 
