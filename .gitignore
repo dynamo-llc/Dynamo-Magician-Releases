@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# Generated outputs
+output_*.mp4
+crash_log.txt
+
+# User images
+denise.jpg
+denise.png
+
+# Large model weights (download separately)
+*.pth
+*.safetensors
+tokenizer/tokenizer.json

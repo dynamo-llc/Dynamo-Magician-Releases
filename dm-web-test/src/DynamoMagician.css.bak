@@ -1,0 +1,560 @@
+/* ============================================================
+   DynamoMagician.css
+   Custom CSS companion for DynamoMagician.tsx.
+   Handles: neon glows, circuit-board textures, slider track/thumb,
+   glassmorphism cards, animated lightning bar, transmute pulse.
+   ============================================================ */
+
+/* ─── Custom properties ─────────────────────────────────────────── */
+:root {
+  --dm-void:    #080b12;
+  --dm-shell:   #0d1018;
+  --dm-panel:   #111521;
+  --dm-mid:     #1d2332;
+  --dm-deep:    #0f1420;
+  --dm-copper:  #a97d72;
+  --dm-copdk:   #51383c;
+  --dm-cyan:    #76e9ff;
+  --dm-csoft:   #4fb4dc;
+  --dm-mag:     #f062ff;
+  --dm-red:     #ff5252;
+  --dm-text:    #dbe9f7;
+  --dm-dim:     #8aa2bc;
+}
+
+/* ─── Root container ────────────────────────────────────────────── */
+.dm-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--dm-shell);
+  color: var(--dm-text);
+  font-family: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  gap: 0;
+}
+
+/* ─── Header ────────────────────────────────────────────────────── */
+.dm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #161a27;
+  border: 2px solid var(--dm-copper);
+  border-radius: 18px;
+  height: 62px;
+  margin: 12px 14px 0;
+  padding: 0 16px;
+  flex-shrink: 0;
+  /* subtle circuit grid */
+  background-image:
+    linear-gradient(rgba(79,180,220,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,180,220,.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.dm-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dm-text);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Main two-column layout ────────────────────────────────────── */
+.dm-main {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  margin: 8px 14px;
+  min-height: 0;
+}
+
+/* ─── Left bay outer (neon magenta glow border) ─────────────────── */
+.dm-bay-outer {
+  flex: 11;
+  min-width: 0;
+  background: #241b2f;
+  border: 2px solid var(--dm-mag);
+  border-radius: 22px;
+  padding: 12px;
+  box-shadow:
+    0 0 14px var(--dm-mag),
+    0 0 30px #f062ff55,
+    0 0 65px #f062ff18,
+    inset 0 0 10px #f062ff1a;
+}
+
+.dm-bay-inner {
+  background: #141a28;
+  border: 1px solid var(--dm-csoft);
+  border-radius: 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Select image button */
+.dm-select-btn {
+  margin: 18px 18px 12px;
+  background: #395393;
+  border: 1px solid var(--dm-cyan);
+  border-radius: 12px;
+  color: var(--dm-text);
+  font-family: 'Bahnschrift SemiCondensed', 'Bahnschrift', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  height: 54px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #76e9ff22;
+  transition: background 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+.dm-select-btn:hover {
+  background: #3d61b5;
+  box-shadow: 0 0 16px #76e9ff44;
+}
+
+/* ─── Preview frame ──────────────────────────────────────────────── */
+.dm-preview-frame {
+  flex: 1;
+  margin: 0 18px 18px;
+  background: var(--dm-deep);
+  border: 2px solid var(--dm-csoft);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  /* subtle inner scan-line overlay */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 5px,
+    rgba(118, 233, 255, 0.012) 6px
+  );
+}
+
+.dm-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  display: block;
+}
+
+/* Scan line accents */
+.dm-scan-top {
+  position: absolute;
+  top: 6%;
+  left: 7%;
+  right: 7%;
+  height: 2px;
+  background: var(--dm-cyan);
+  border-radius: 6px;
+  box-shadow: 0 0 8px var(--dm-cyan), 0 0 16px #76e9ff44;
+  pointer-events: none;
+}
+
+.dm-scan-btm {
+  position: absolute;
+  bottom: 6%;
+  left: 7%;
+  width: 52%;
+  height: 2px;
+  background: var(--dm-mag);
+  border-radius: 6px;
+  box-shadow: 0 0 8px var(--dm-mag), 0 0 16px #f062ff44;
+  pointer-events: none;
+}
+
+/* Floating info chips */
+.dm-chip {
+  position: absolute;
+  background: rgba(30, 38, 60, 0.82);
+  border: 1px solid rgba(118, 233, 255, 0.35);
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--dm-text);
+  backdrop-filter: blur(6px);
+  line-height: 1.45;
+  pointer-events: none;
+  white-space: nowrap;
+  /* faint left accent bar */
+  border-left: 2px solid var(--dm-csoft);
+}
+
+/* Status strip at bay bottom */
+.dm-bay-status {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 78%;
+  background: var(--dm-mid);
+  border: 1px solid #2d4d67;
+  border-radius: 12px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ─── Right panel ────────────────────────────────────────────────── */
+.dm-panel {
+  flex: 9;
+  min-width: 0;
+  background: #202431;
+  border: 2px solid var(--dm-copdk);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* circuit board texture */
+  background-image:
+    linear-gradient(rgba(79,180,220,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,180,220,.022) 1px, transparent 1px),
+    radial-gradient(circle at 15% 85%, rgba(240,98,255,.04) 0%, transparent 55%),
+    radial-gradient(circle at 85% 15%, rgba(76,180,220,.04) 0%, transparent 55%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+}
+
+.dm-panel-title {
+  margin: 10px 18px 6px;
+  background: #2a2935;
+  border: 1px solid var(--dm-copper);
+  border-radius: 12px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bahnschrift SemiCondensed', 'Bahnschrift', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dm-text);
+  flex-shrink: 0;
+}
+
+.dm-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #31415c transparent;
+}
+.dm-panel-body::-webkit-scrollbar { width: 4px; }
+.dm-panel-body::-webkit-scrollbar-thumb { background: #31415c; border-radius: 99px; }
+.dm-panel-body::-webkit-scrollbar-track { background: transparent; }
+
+/* ─── Parameter card (glassmorphism) ─────────────────────────────── */
+.dm-card {
+  background: rgba(17, 21, 33, 0.72);
+  border: 1px solid #334158;
+  border-radius: 14px;
+  padding-bottom: 4px;
+  flex-shrink: 0;
+  /* glass backdrop */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dm-card-label {
+  display: block;
+  font-family: 'Bahnschrift', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dm-text);
+  padding: 4px 12px 2px;
+}
+
+/* ─── Textarea ───────────────────────────────────────────────────── */
+.dm-textarea {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px 4px;
+  height: 54px;
+  background: #0f141f;
+  border: 1px solid var(--dm-csoft);
+  border-radius: 12px;
+  color: var(--dm-text);
+  font-family: 'Bahnschrift', sans-serif;
+  font-size: 13px;
+  padding: 7px 10px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dm-textarea:focus {
+  border-color: var(--dm-cyan);
+  box-shadow: 0 0 8px #76e9ff33;
+}
+
+/* ─── Select dropdown ────────────────────────────────────────────── */
+.dm-select {
+  display: block;
+  width: 100%;
+  height: 34px;
+  background: #101625;
+  border: 1px solid var(--dm-csoft);
+  border-radius: 10px;
+  color: var(--dm-text);
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  padding: 0 32px 0 10px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.dm-select:focus { border-color: var(--dm-cyan); }
+
+/* ─── W/H dimension inputs ───────────────────────────────────────── */
+.dm-dim-inp {
+  width: 82px;
+  background: #0d121d;
+  border: 1px solid #55627d;
+  border-radius: 10px;
+  color: var(--dm-red);
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 8px;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.dm-dim-inp:focus { border-color: var(--dm-cyan); }
+
+/* ─── Range slider ───────────────────────────────────────────────── */
+.dm-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px 2px;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--acc)   0%,
+    var(--acc)   var(--pct),
+    #0d1220      var(--pct),
+    #0d1220      100%
+  );
+  border: 1px solid #42516f;
+  cursor: pointer;
+  outline: none;
+}
+/* WebKit thumb */
+.dm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--acc);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--acc);
+}
+/* Firefox thumb */
+.dm-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--acc);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--acc);
+}
+
+/* Slider value badge */
+.dm-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+
+.dm-badge-arrow {
+  background: none;
+  border: none;
+  color: var(--dm-dim);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.1s;
+  line-height: 1;
+}
+.dm-badge-arrow:hover { color: var(--dm-text); }
+
+.dm-badge {
+  background: #15111c;
+  border: 1px solid;
+  border-radius: 10px;
+  font-family: 'Consolas', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 16px;
+  min-width: 80px;
+  text-align: center;
+  /* faint inner glow matches the badge border colour */
+  box-shadow: inset 0 0 8px #00000055;
+}
+
+/* ─── Entry field (Frame Count / Seed) ───────────────────────────── */
+.dm-entry {
+  width: 82px;
+  flex-shrink: 0;
+  background: #0d121d;
+  border: 1px solid #55627d;
+  border-radius: 10px;
+  color: var(--dm-text);
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.dm-entry:focus { border-color: var(--dm-cyan); }
+
+/* ─── Energy bar (Seed) ──────────────────────────────────────────── */
+.dm-energy-track {
+  flex: 1;
+  height: 10px;
+  background: #141925;
+  border: 1px solid var(--dm-copdk);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+.dm-energy-fill {
+  height: 100%;
+  border-radius: 9999px;
+}
+.dm-energy-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    transparent 40%,
+    rgba(240, 98, 255, 0.25)
+  );
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+}
+
+/* ─── Camera Control row ─────────────────────────────────────────── */
+.dm-link-btn {
+  width: 100px;
+  height: 32px;
+  flex-shrink: 0;
+  background: #26334f;
+  border: 1px solid var(--dm-copper);
+  border-radius: 10px;
+  color: var(--dm-text);
+  font-family: 'Bahnschrift', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dm-link-btn:hover { background: #344568; }
+
+/* ─── Footer ─────────────────────────────────────────────────────── */
+.dm-footer {
+  background: #141927;
+  border: 2px solid var(--dm-copper);
+  border-radius: 22px;
+  margin: 0 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Lightning progress fill */
+.dm-lightning-fill {
+  background: linear-gradient(90deg, #1b4fa0, var(--dm-cyan));
+  border-radius: 10px;
+  box-shadow:
+    0 0 10px var(--dm-cyan),
+    0 0 22px #76e9ff66;
+  position: relative;
+}
+.dm-lightning-fill::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  background: radial-gradient(ellipse at center, white 0%, var(--dm-cyan) 45%, transparent 70%);
+  filter: blur(3px);
+}
+
+/* Electric head spark  */
+.dm-lightning-head {
+  background: radial-gradient(circle, white 10%, var(--dm-cyan) 45%, transparent 70%);
+  filter: blur(3px);
+  animation: spark-flicker 0.4s steps(2) infinite;
+}
+@keyframes spark-flicker {
+  0%   { opacity: 1;    transform: translate(-50%, -50%) scale(1); }
+  50%  { opacity: 0.65; transform: translate(-50%, -50%) scale(1.3); }
+  100% { opacity: 1;    transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* ─── TRANSMUTING button ─────────────────────────────────────────── */
+.dm-transmute-btn {
+  height: 48px;
+  background: #2a3364;
+  border: 2px solid var(--dm-cyan);
+  border-radius: 16px;
+  color: var(--dm-text);
+  font-family: 'Bahnschrift SemiCondensed', 'Bahnschrift', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  animation: transmute-pulse 2s ease-in-out infinite;
+  transition: background 0.15s;
+}
+.dm-transmute-btn:hover { background: #394585; }
+
+@keyframes transmute-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px #76e9ff55, inset 0 0 8px #76e9ff18;
+  }
+  50% {
+    box-shadow:
+      0 0 22px #76e9ffaa,
+      0 0 44px #76e9ff44,
+      inset 0 0 14px #76e9ff2a;
+  }
+}
+
+/* ─── Session log bar ────────────────────────────────────────────── */
+.dm-session-bar {
+  margin: 0 18px 10px;
+  background: #101420;
+  border: 1px solid var(--dm-copdk);
+  border-radius: 12px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--dm-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}

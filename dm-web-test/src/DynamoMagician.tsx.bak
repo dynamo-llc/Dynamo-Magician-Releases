@@ -1,0 +1,487 @@
+"use client";
+
+/**
+ * DynamoMagician — pixel-perfect React + Tailwind recreation of the
+ * AETHER-NET v2.47 reference design.
+ *
+ * Drop into any React 18 / Tailwind 3 (JIT) project alongside
+ * DynamoMagician.css.  No extra dependencies required.
+ */
+
+import React, { useState, useRef, useCallback } from "react";
+import "./DynamoMagician.css";
+
+// ── colour tokens (extracted from reference) ─────────────────────────────────
+const MAG       = "#f062ff";
+const CYAN      = "#76e9ff";
+const CYAN_SOFT = "#4fb4dc";
+const TEXT      = "#dbe9f7";
+const TEXT_DIM  = "#8aa2bc";
+const RED_VAL   = "#ff5252";
+const COPPER    = "#a97d72";
+const COPPER_DK = "#51383c";
+
+// ── types ────────────────────────────────────────────────────────────────────
+interface Chip {
+  lines: string[];
+  style: React.CSSProperties;
+}
+
+interface SliderCardProps {
+  label:      string;
+  value:      number;
+  min:        number;
+  max:        number;
+  step:       number;
+  onChange:   (v: number) => void;
+  accent:     string;
+  badgeColor: string;
+  format:     (v: number) => string;
+}
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+const round = (v: number, s: number) => parseFloat((Math.round(v / s) * s).toFixed(10));
+
+// ── SliderCard sub-component ─────────────────────────────────────────────────
+function SliderCard({ label, value, min, max, step, onChange, accent, badgeColor, format }: SliderCardProps) {
+  const pct = Math.round(((value - min) / (max - min)) * 100);
+  const dec = (amt: number) => onChange(clamp(round(value - amt, step), min, max));
+  const inc = (amt: number) => onChange(clamp(round(value + amt, step), min, max));
+
+  return (
+    <div className="dm-card">
+      <label className="dm-card-label">{label}</label>
+      <input
+        type="range"
+        min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className="dm-slider"
+        style={{ "--acc": accent, "--pct": `${pct}%` } as React.CSSProperties}
+      />
+      <div className="dm-badge-row">
+        <button className="dm-badge-arrow" onClick={() => dec(step)}>◄</button>
+        <div className="dm-badge" style={{ borderColor: `${accent}88`, color: badgeColor }}>
+          {format(value)}
+        </div>
+        <button className="dm-badge-arrow" onClick={() => inc(step)}>►</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+export default function DynamoMagician() {
+  const [imageSrc,   setImageSrc]   = useState<string | null>(null);
+  const [imageName,  setImageName]  = useState("");
+  const [imageW,     setImageW]     = useState(0);
+  const [imageH,     setImageH]     = useState(0);
+  const [prompt,     setPrompt]     = useState("A cinematic aether-trace of the scene, precise lighting, vivid detail.");
+  const [resolution, setResolution] = useState("480*832");
+  const [width,      setWidth]      = useState("832");
+  const [height,     setHeight]     = useState("480");
+  const [steps,      setSteps]      = useState(40);
+  const [guidance,   setGuidance]   = useState(5.0);
+  const [frames,     setFrames]     = useState("81");
+  const [seed,       setSeed]       = useState("-1");
+  const [cycles,     setCycles]     = useState({ cur: 32, total: 40 });
+  const [vramHigh,   setVramHigh]   = useState(false);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    setImageSrc(url);
+    setImageName(f.name);
+    const img = new Image();
+    img.onload = () => { setImageW(img.naturalWidth); setImageH(img.naturalHeight); };
+    img.src = url;
+    e.target.value = "";
+  }, []);
+
+  const handleResolution = useCallback((v: string) => {
+    setResolution(v);
+    if (v !== "Custom" && v.includes("*")) {
+      const [h, w] = v.split("*");
+      setHeight(h);
+      setWidth(w);
+    }
+  }, []);
+
+  const stem = imageName.replace(/\.[^.]+$/, "").slice(0, 14).toUpperCase();
+
+  const chips: Chip[] = imageSrc
+    ? [
+        { lines: ["SUBJECT LOCK"],                    style: { top: "8%",  left: "8%" } },
+        { lines: ["SOURCE FILE", `${imageW}×${imageH}`], style: { top: "8%",  right: "6%" } },
+        { lines: ["INPUT ASSET", stem],               style: { bottom: "28%", left: "8%" } },
+      ]
+    : [
+        { lines: ["LENS-CORE"],                           style: { top: "8%",  left: "8%" } },
+        { lines: ["AETHER-VIEW", "OPTIC LINK"],           style: { top: "8%",  right: "6%" } },
+        { lines: ["AETHER-MODEL", "BIO-SPEC: READY"],     style: { bottom: "28%", left: "8%" } },
+      ];
+
+  const bayStatus = imageSrc
+    ? `PHOTON MAP READY   |   SUBJECT: ${stem}   |   VISUAL LINK STABLE`
+    : "OPTICAL SYNC   |   SIGNAL CLEAN   |   VISUAL BAY ONLINE";
+
+  const progress = cycles.total > 0 ? (cycles.cur / cycles.total) * 100 : 0;
+
+  return (
+    <div className="dm-root">
+
+      {/* ╔══ HEADER ══════════════════════════════════════════════════════════╗ */}
+      <header className="dm-header">
+        <span className="text-[#a97d72] text-xl opacity-70 mr-1">⚙</span>
+
+        <h1 className="dm-title whitespace-nowrap">
+          Dynamo Magician{" "}
+          <span className="text-[18px] font-semibold opacity-80">[AETHER-NET v2.47]</span>
+        </h1>
+
+        {/* colour strip */}
+        <div className="flex-1 flex items-center gap-4 px-5">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div
+              key={i}
+              className="flex-1 h-[4px] rounded-full opacity-70"
+              style={{ background: i % 2 === 0 ? CYAN : MAG }}
+            />
+          ))}
+        </div>
+
+        <span className="font-mono text-[11px] text-[#8aa2bc] tracking-widest whitespace-nowrap">
+          SYS · SYNC · LOCK
+        </span>
+
+        {/* icon buttons */}
+        <div className="flex gap-[6px] ml-3">
+          {[
+            { icon: "⌁",  cls: "text-[#76e9ff]" },
+            { icon: "◈",  cls: "text-[#76e9ff]" },
+            { icon: "✕",  cls: "text-[#ff6f87]" },
+            { icon: "−",  cls: "text-[#8aa2bc]" },
+          ].map(({ icon, cls }, i) => (
+            <button
+              key={i}
+              className={`w-[34px] h-[34px] rounded-lg bg-[#221f2c] ${cls} text-[16px] flex items-center justify-center hover:opacity-70 transition-opacity cursor-pointer border-0`}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* ╔══ MAIN CONTENT ════════════════════════════════════════════════════╗ */}
+      <div className="dm-main">
+
+        {/* ── Left preview bay ─────────────────────────────────────────── */}
+        <div className="dm-bay-outer">
+          <div className="dm-bay-inner">
+
+            {/* Select button */}
+            <button
+              className="dm-select-btn"
+              onClick={() => fileRef.current?.click()}
+            >
+              Step 1: Select Input Image
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFile}
+            />
+
+            {/* Preview frame */}
+            <div className="dm-preview-frame">
+              {imageSrc ? (
+                <img src={imageSrc} alt="preview" className="dm-preview-img" />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8">
+                  <span className="font-['Bahnschrift_SemiCondensed',sans-serif] text-2xl font-bold text-[#8aa2bc]">
+                    NO IMAGE SELECTED
+                  </span>
+                  <span className="font-mono text-xs text-[#4fb4dc]">
+                    Visual bay ready for source acquisition
+                  </span>
+                </div>
+              )}
+
+              {/* Decorative scan lines */}
+              <div className="dm-scan-top" />
+              <div className="dm-scan-btm" />
+
+              {/* Floating chips */}
+              {chips.map((chip, i) => (
+                <div key={i} className="dm-chip" style={chip.style}>
+                  {chip.lines.map((line, j) => (
+                    <div key={j}>{line}</div>
+                  ))}
+                </div>
+              ))}
+
+              {/* Status strip */}
+              <div className="dm-bay-status">
+                <span className="font-mono text-[9px] text-[#76e9ff] text-center whitespace-nowrap">
+                  {bayStatus}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ── Right parameters panel ───────────────────────────────────── */}
+        <div className="dm-panel">
+          <div className="dm-panel-title">Parameters</div>
+
+          <div className="dm-panel-body">
+
+            {/* Prompt */}
+            <div className="dm-card">
+              <label className="dm-card-label">Prompt</label>
+              <textarea
+                className="dm-textarea"
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {/* Resolution Preset */}
+            <div className="dm-card">
+              <label className="dm-card-label">Resolution Preset</label>
+              <div className="relative mx-3 mb-1">
+                <select
+                  className="dm-select"
+                  value={resolution}
+                  onChange={e => handleResolution(e.target.value)}
+                >
+                  {["480*832", "832*480", "576*1024", "1024*576", "Custom"].map(v => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#4fb4dc] text-xs">▼</span>
+              </div>
+              <div className="flex items-center px-3 pb-1 gap-2">
+                <span className="text-[15px] font-semibold text-[#dbe9f7] font-['Bahnschrift',sans-serif]">W.</span>
+                <input
+                  className="dm-dim-inp"
+                  value={width}
+                  onChange={e => setWidth(e.target.value)}
+                />
+                <span className="text-[15px] font-semibold text-[#dbe9f7] font-['Bahnschrift',sans-serif] ml-3">H.</span>
+                <input
+                  className="dm-dim-inp"
+                  value={height}
+                  onChange={e => setHeight(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Sampling Steps */}
+            <SliderCard
+              label="Sampling Steps"
+              value={steps} min={10} max={100} step={1}
+              onChange={setSteps}
+              accent={MAG} badgeColor={RED_VAL}
+              format={v => v.toFixed(2)}
+            />
+
+            {/* Guidance Scale */}
+            <SliderCard
+              label="Guidance Scale"
+              value={guidance} min={1} max={15} step={0.1}
+              onChange={setGuidance}
+              accent={CYAN} badgeColor={TEXT}
+              format={v => v.toFixed(1)}
+            />
+
+            {/* Frame Count */}
+            <div className="dm-card">
+              <label className="dm-card-label">Frame Count</label>
+              <div className="flex items-center gap-3 px-3 pb-1">
+                <input
+                  className="dm-entry"
+                  value={frames}
+                  onChange={e => setFrames(e.target.value)}
+                />
+                <div className="flex-1 h-6 overflow-hidden">
+                  <svg viewBox="0 0 120 24" preserveAspectRatio="none" className="w-full h-full">
+                    <polyline
+                      fill="none"
+                      stroke={CYAN_SOFT}
+                      strokeWidth="1.5"
+                      points="0,12 12,12 18,4 24,20 30,12 42,12 48,3 54,21 60,12 72,12 78,6 84,18 90,12 120,12"
+                      style={{ filter: `drop-shadow(0 0 4px ${CYAN})` }}
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Seed */}
+            <div className="dm-card">
+              <label className="dm-card-label">Seed (-1 for random)</label>
+              <div className="flex items-center gap-3 px-3 pb-1">
+                <input
+                  className="dm-entry"
+                  value={seed}
+                  onChange={e => setSeed(e.target.value)}
+                />
+                <div className="dm-energy-track">
+                  <div
+                    className="dm-energy-fill"
+                    style={{ width: "72%", background: `linear-gradient(90deg, #9b30ff, ${MAG})` }}
+                  />
+                  <div className="dm-energy-shimmer" />
+                </div>
+              </div>
+            </div>
+
+            {/* Camera Control */}
+            <div className="dm-card">
+              <label className="dm-card-label">Camera Control</label>
+              <div className="flex items-center gap-3 px-3 pb-1">
+                <span className="flex-1 font-mono text-xs text-[#8aa2bc]">
+                  No camera path selected
+                </span>
+                <button className="dm-link-btn">Link Folder</button>
+              </div>
+            </div>
+
+            {/* VRAM toggle */}
+            <div className="flex items-center gap-3 px-1 py-1">
+              <label className="relative cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={vramHigh}
+                  onChange={e => setVramHigh(e.target.checked)}
+                />
+                <span
+                  className="block w-10 h-[22px] rounded-full transition-colors duration-200"
+                  style={{ background: vramHigh ? MAG : "#2d3342" }}
+                >
+                  <span
+                    className="block w-4 h-4 bg-[#dbe9f7] rounded-full absolute top-[3px] transition-transform duration-200"
+                    style={{ left: 3, transform: vramHigh ? "translateX(18px)" : "none" }}
+                  />
+                </span>
+              </label>
+              <span className="font-['Bahnschrift',sans-serif] text-[14px] text-[#dbe9f7]">
+                High VRAM Mode (48GB+)
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ╔══ FOOTER ══════════════════════════════════════════════════════════╗ */}
+      <footer className="dm-footer">
+
+        {/* Lightning progress bar */}
+        <div className="mx-5 mt-[10px] h-4 rounded-[10px] bg-[#0c1320] border border-[#4fb4dc] overflow-hidden relative">
+          <div
+            className="dm-lightning-fill h-full rounded-[10px] transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
+          />
+          {/* electric head */}
+          <div
+            className="dm-lightning-head absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full pointer-events-none"
+            style={{ left: `${progress}%` }}
+          />
+        </div>
+
+        {/* Footer body */}
+        <div className="flex gap-[10px] px-5 pb-[10px] pt-[6px]">
+
+          {/* Flow steps */}
+          <div
+            className="flex-[5] rounded-2xl border border-[#4fb4dc] p-[6px_10px] flex flex-col gap-1"
+            style={{ background: "#111826" }}
+          >
+            <div className="flex items-center justify-around">
+              {(["DATA INGEST", "COGNITIVE PROCESSING", "AETHER-FLUX"] as const).map((lbl, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && (
+                    <span
+                      className="text-xl font-bold mx-1 flex-shrink-0"
+                      style={{ color: CYAN, filter: `drop-shadow(0 0 4px ${CYAN})` }}
+                    >
+                      →
+                    </span>
+                  )}
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className="text-lg leading-none"
+                      style={{ color: CYAN, filter: `drop-shadow(0 0 6px ${CYAN})` }}
+                    >
+                      {i === 0 ? "⬡" : i === 1 ? "⬡" : "❊"}
+                    </div>
+                    <span className="font-['Bahnschrift',sans-serif] text-[10px] text-center text-[#dbe9f7]">
+                      {lbl}
+                    </span>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="mt-1">
+              <div className="font-['Bahnschrift_SemiCondensed',sans-serif] text-[14px] font-bold text-[#76e9ff]">
+                AETHER-NET STATUS: ACTIVE
+              </div>
+              <div className="font-mono text-[11px] text-[#dbe9f7] mt-[2px]">
+                MODEL: Dynamo_Mage_v0.9.1
+              </div>
+            </div>
+          </div>
+
+          {/* Transmute button */}
+          <div
+            className="flex-[4] rounded-[18px] border-2 border-[#f062ff] flex flex-col items-center justify-center gap-1 px-4 py-2"
+            style={{ background: "#1b1730" }}
+          >
+            <button className="dm-transmute-btn w-full">
+              TRANSMUTING...
+            </button>
+            <div className="font-['Bahnschrift_SemiCondensed',sans-serif] text-[13px] font-bold text-[#76e9ff]">
+              CYCLES: {cycles.cur}/{cycles.total}
+            </div>
+          </div>
+
+          {/* Flux + thumbnail */}
+          <div
+            className="flex-[2] rounded-[14px] border border-[#4fb4dc] flex flex-col items-center justify-center gap-1 p-[6px] overflow-hidden"
+            style={{ background: "#101722" }}
+          >
+            <span className="font-['Bahnschrift_SemiCondensed',sans-serif] text-[12px] font-bold text-[#4fb4dc]">
+              AETHER-FLUX: 85%
+            </span>
+            <div className="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden rounded-lg">
+              {imageSrc ? (
+                <img src={imageSrc} alt="thumb" className="w-full h-full object-cover rounded-lg" />
+              ) : (
+                <span className="font-['Bahnschrift_SemiCondensed',sans-serif] text-[12px] font-bold text-[#8aa2bc]">
+                  IMAGE FEED
+                </span>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
+      {/* ╔══ SESSION LOG ═════════════════════════════════════════════════════╗ */}
+      <div className="dm-session-bar">
+        SESSION_LOG: Input accepted... Model initialized... Aether-Flux optimal... 2.3 Teraflops...
+      </div>
+
+    </div>
+  );
+}
